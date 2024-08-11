@@ -1,0 +1,2210 @@
+openapi: 3.0.1
+info:
+  title: Spotify Clone
+  description: "This API provides functionality for managing playlists and tracks\
+    \ within a Spotify-like application. It allows users to retrieve, update, and\
+    \ manage playlists and their tracks."
+  version: "1.0"
+servers:
+- url: https://virtserver.swaggerhub.com/IMHUY105_1/spotify-clone/1.0
+  description: SwaggerHub API Auto Mocking
+- url: http://localhost:8080
+  description: Local development server for testing and development.
+paths:
+  /api/playlists/{playlistId}/tracks/{trackId}/move:
+    put:
+      tags:
+      - playlist-controller
+      summary: Move a track within a playlist
+      description: Moves a specified track within a playlist to a new position. The
+        position is defined by the `new_position` query parameter.
+      operationId: moveTrack
+      parameters:
+      - name: playlistId
+        in: path
+        description: The unique identifier of the playlist containing the track.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      - name: trackId
+        in: path
+        description: The unique identifier of the track to be moved.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      - name: new_position
+        in: query
+        description: The new position in the playlist where the track should be moved
+          to. Positions are zero-based.
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Track successfully moved to the new position within the playlist.
+        "400":
+          description: "Bad request. This could occur if invalid `playlistId`, `trackId`,\
+            \ or `new_position` is provided."
+        "404":
+          description: Not found. This could occur if the specified `playlistId` or
+            `trackId` does not exist.
+      x-swagger-router-controller: PlaylistController
+  /api/playlists/{id}:
+    get:
+      tags:
+      - playlist-controller
+      summary: Retrieve a playlist by ID
+      description: Fetches detailed information about a specific playlist using its
+        unique identifier.
+      operationId: findPlaylistById
+      parameters:
+      - name: id
+        in: path
+        description: The unique identifier of the playlist to retrieve.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Successfully retrieved the playlist.
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/Playlist'
+        "404":
+          description: Not found. This could occur if the specified `id` does not
+            exist.
+      x-swagger-router-controller: PlaylistController
+    put:
+      tags:
+      - playlist-controller
+      summary: Update a playlist by ID
+      description: Updates the details of a specific playlist using its unique identifier.
+        The playlist data is provided in the request body.
+      operationId: updatePlaylist
+      parameters:
+      - name: id
+        in: path
+        description: The unique identifier of the playlist to be updated.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        description: The updated details of the playlist.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaylistDto'
+        required: true
+      responses:
+        "200":
+          description: Successfully updated the playlist.
+        "400":
+          description: Bad request. This could occur if the provided data in the request
+            body is invalid.
+        "404":
+          description: Not found. This could occur if the specified `id` does not
+            exist.
+      x-swagger-router-controller: PlaylistController
+  /api/me/tracks:
+    get:
+      tags:
+      - library-controller
+      summary: Retrieve saved tracks
+      description: Fetches a list of tracks saved by the user. The response includes
+        pagination if the `page` query parameter is provided.
+      operationId: getSavedTrack
+      parameters:
+      - name: page
+        in: query
+        description: "The page number for pagination. If not provided, the first page\
+          \ of results is returned."
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: Successfully retrieved the list of saved tracks.
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/PagePlaylistTrack'
+        "400":
+          description: Bad request. This could occur if the `page` parameter is invalid.
+      x-swagger-router-controller: LibraryController
+    put:
+      tags:
+      - library-controller
+      summary: Like a track
+      description: Marks a specified track as liked by the user.
+      operationId: likeTrack
+      parameters:
+      - name: track_id
+        in: query
+        description: The unique identifier of the track to be liked.
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Track successfully liked.
+        "400":
+          description: Bad request. This could occur if the `track_id` is invalid.
+        "404":
+          description: Not found. This could occur if the specified `track_id` does
+            not exist.
+      x-swagger-router-controller: LibraryController
+    delete:
+      tags:
+      - library-controller
+      summary: Unlike a track
+      description: Removes the like status from a specified track.
+      operationId: unlikeTrack
+      parameters:
+      - name: track_id
+        in: query
+        description: The unique identifier of the track to be unliked.
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Track successfully unliked.
+        "400":
+          description: Bad request. This could occur if the `track_id` is invalid.
+        "404":
+          description: Not found. This could occur if the specified `track_id` does
+            not exist.
+      x-swagger-router-controller: LibraryController
+  /api/me/player/shuffle:
+    put:
+      tags:
+      - player-controller
+      summary: Set shuffle mode
+      description: Enables or disables shuffle mode for the player. The response confirms
+        the current shuffle mode setting.
+      operationId: setShuffleMode
+      responses:
+        "200":
+          description: Shuffle mode successfully updated.
+          content:
+            '*/*':
+              schema:
+                type: string
+                description: The current shuffle mode setting ("enabled" or "disabled").
+                x-content-type: '*/*'
+      x-swagger-router-controller: PlayerController
+  /api/me/player/sequential:
+    put:
+      tags:
+      - player-controller
+      summary: Set sequential mode
+      description: Enables or disables sequential play mode for the player. The response
+        confirms the current sequential play mode setting.
+      operationId: setSequenceMode
+      responses:
+        "200":
+          description: Sequential mode successfully updated.
+          content:
+            '*/*':
+              schema:
+                type: string
+                description: The current sequential mode setting ("enabled" or "disabled").
+                x-content-type: '*/*'
+      x-swagger-router-controller: PlayerController
+  /api/me/player/resume:
+    put:
+      tags:
+      - player-controller
+      summary: Resume playback
+      description: Resumes playback of the currently playing track or playlist.
+      operationId: resumeSession
+      responses:
+        "200":
+          description: Playback successfully resumed.
+      x-swagger-router-controller: PlayerController
+  /api/me/player/repeat:
+    put:
+      tags:
+      - player-controller
+      summary: Set repeat mode
+      description: Sets the repeat mode for the player. The response confirms the
+        current repeat mode setting.
+      operationId: setRepeatMode
+      responses:
+        "200":
+          description: Repeat mode successfully updated.
+          content:
+            '*/*':
+              schema:
+                type: string
+                description: "The current repeat mode setting (\"off\", \"track\"\
+                  , or \"playlist\")."
+                x-content-type: '*/*'
+      x-swagger-router-controller: PlayerController
+  /api/me/player/pause:
+    put:
+      tags:
+      - player-controller
+      summary: Pause playback
+      description: Pauses the playback of the currently playing track or playlist.
+      operationId: pauseSession
+      responses:
+        "200":
+          description: Playback successfully paused.
+      x-swagger-router-controller: PlayerController
+  /api/me/following:
+    get:
+      tags:
+      - library-controller
+      summary: Retrieve followed artists
+      description: Fetches a list of artists that the user is following. The response
+        includes pagination if the `page` query parameter is provided.
+      operationId: getFollowingArtistList
+      parameters:
+      - name: page
+        in: query
+        description: "The page number for pagination. If not provided, the first page\
+          \ of results is returned."
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: Successfully retrieved the list of followed artists.
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/PageArtist'
+        "400":
+          description: Bad request. This could occur if the `page` parameter is invalid.
+      x-swagger-router-controller: LibraryController
+    put:
+      tags:
+      - library-controller
+      summary: Follow an artist
+      description: Marks a specified artist as followed by the user.
+      operationId: followArtist
+      parameters:
+      - name: artist_id
+        in: query
+        description: The unique identifier of the artist to be followed.
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Artist successfully followed.
+        "400":
+          description: Bad request. This could occur if the `artist_id` is invalid.
+        "404":
+          description: Not found. This could occur if the specified `artist_id` does
+            not exist.
+      x-swagger-router-controller: LibraryController
+    delete:
+      tags:
+      - library-controller
+      summary: Unfollow an artist
+      description: Removes the follow status from a specified artist.
+      operationId: unfollowArtist
+      parameters:
+      - name: artist_id
+        in: query
+        description: The unique identifier of the artist to be unfollowed.
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Artist successfully unfollowed.
+        "400":
+          description: Bad request. This could occur if the `artist_id` is invalid.
+        "404":
+          description: Not found. This could occur if the specified `artist_id` does
+            not exist.
+      x-swagger-router-controller: LibraryController
+  /api/albums/{id}/artists:
+    put:
+      tags:
+      - album-controller
+      summary: Update linked artists for an album
+      description: "Updates the list of artists linked to a specified album. The album\
+        \ is identified by its `id`, and the new list of artists is provided in the\
+        \ request body."
+      operationId: updateLinkedArtist
+      parameters:
+      - name: id
+        in: path
+        description: The unique identifier of the album whose linked artists are to
+          be updated.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        description: The request body should contain the new list of artists to be
+          linked to the album.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlbumArtistCRUDRequestDto'
+        required: true
+      responses:
+        "200":
+          description: Successfully updated the linked artists for the album.
+        "400":
+          description: Bad request. This could occur if the `id` is invalid or the
+            request body is malformed.
+        "404":
+          description: Not found. This could occur if the specified `id` does not
+            exist.
+      x-swagger-router-controller: AlbumController
+    post:
+      tags:
+      - album-controller
+      summary: Link a new artist to an album
+      description: "Links a new artist to a specified album. The album is identified\
+        \ by its `id`, and the artist details are provided in the request body."
+      operationId: linkNewArtist
+      parameters:
+      - name: id
+        in: path
+        description: The unique identifier of the album to which the new artist will
+          be linked.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        description: The request body should contain the details of the artist to
+          be linked to the album.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlbumArtistCRUDRequestDto'
+        required: true
+      responses:
+        "200":
+          description: Successfully linked the new artist to the album.
+        "400":
+          description: Bad request. This could occur if the `id` is invalid or the
+            request body is malformed.
+        "404":
+          description: Not found. This could occur if the specified `id` does not
+            exist.
+      x-swagger-router-controller: AlbumController
+  /api/tracks:
+    post:
+      tags:
+      - track-controller
+      summary: Upload a new track
+      description: "Uploads a new track and associates it with a specified album.\
+        \ The track's title and album ID are provided as query parameters, and the\
+        \ track file is included in the request body."
+      operationId: uploadTrack
+      parameters:
+      - name: album_id
+        in: query
+        description: The unique identifier of the album to which the track will be
+          associated.
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: integer
+          format: int64
+      - name: title
+        in: query
+        description: The title of the track being uploaded.
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+      requestBody:
+        description: The request body should contain the binary file of the track
+          to be uploaded.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/api_tracks_body'
+      responses:
+        "201":
+          description: Track successfully created and uploaded.
+        "400":
+          description: Bad request. This could occur if the `album_id` or `title`
+            parameters are invalid or the file upload is malformed.
+      x-swagger-router-controller: TrackController
+  /api/subscriptions/purchase:
+    post:
+      tags:
+      - subscription-controller
+      summary: Purchase a subscription plan
+      description: Processes a subscription purchase based on the specified `planId`.
+        The response includes details about the purchase status.
+      operationId: purchaseSubscription
+      parameters:
+      - name: planId
+        in: query
+        description: The unique identifier of the subscription plan to be purchased.
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: Subscription successfully purchased.
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/VNPayResponse'
+        "400":
+          description: Bad request. This could occur if the `planId` is invalid.
+        "404":
+          description: Not found. This could occur if the specified `planId` does
+            not exist.
+      x-swagger-router-controller: SubscriptionController
+  /api/playlists:
+    post:
+      tags:
+      - playlist-controller
+      summary: Create a new playlist
+      description: Creates a new playlist with the details provided in the request
+        body.
+      operationId: createPlaylist
+      requestBody:
+        description: The request body should contain the details of the new playlist
+          to be created.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaylistDto'
+        required: true
+      responses:
+        "200":
+          description: Playlist successfully created.
+        "400":
+          description: Bad request. This could occur if the request body is malformed.
+      x-swagger-router-controller: PlaylistController
+  /api/playlists/{playlistId}/tracks:
+    post:
+      tags:
+      - playlist-controller
+      summary: Add a track to the end of a playlist
+      description: Adds a specified track to the end of the playlist identified by
+        `playlistId`. The track is identified by `track_id` provided as a query parameter.
+      operationId: addTrackToEnd
+      parameters:
+      - name: playlistId
+        in: path
+        description: The unique identifier of the playlist to which the track will
+          be added.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      - name: track_id
+        in: query
+        description: The unique identifier of the track to be added to the playlist.
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Track successfully added to the playlist.
+        "400":
+          description: Bad request. This could occur if the `playlistId` or `track_id`
+            parameters are invalid.
+        "404":
+          description: Not found. This could occur if the specified `playlistId` or
+            `track_id` does not exist.
+      x-swagger-router-controller: PlaylistController
+  /api/me/player/queue/{trackId}:
+    post:
+      tags:
+      - player-controller
+      summary: Add a track to the player queue
+      description: Adds a specified track to the playback queue. The track is identified
+        by `trackId` provided as a path parameter.
+      operationId: addItemToQueue
+      parameters:
+      - name: trackId
+        in: path
+        description: The unique identifier of the track to be added to the player
+          queue.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Track successfully added to the queue.
+        "404":
+          description: Not found. This could occur if the specified `trackId` does
+            not exist.
+      x-swagger-router-controller: PlayerController
+  /api/me/player/previous:
+    post:
+      tags:
+      - player-controller
+      summary: Skip to the previous track
+      description: Skips to the previous track in the playback queue.
+      operationId: previous
+      responses:
+        "200":
+          description: Successfully skipped to the previous track.
+          content:
+            '*/*':
+              schema:
+                type: string
+                description: The URL of the previous track.
+                format: url
+                x-content-type: '*/*'
+      x-swagger-router-controller: PlayerController
+  /api/me/player/next:
+    post:
+      tags:
+      - player-controller
+      summary: Skip to the next track
+      description: Skips to the next track in the playback queue.
+      operationId: next
+      responses:
+        "200":
+          description: Successfully skipped to the next track.
+          content:
+            '*/*':
+              schema:
+                type: string
+                description: The URL of the next track.
+                format: url
+                x-content-type: '*/*'
+      x-swagger-router-controller: PlayerController
+  /api/auth/register:
+    post:
+      tags:
+      - authentication-controller
+      summary: Register a new user
+      description: Registers a new user account with the provided details.
+      operationId: register
+      requestBody:
+        description: The request body should contain the user details required for
+          registration.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthenticationRequestDto'
+        required: true
+      responses:
+        "202":
+          description: Registration request accepted. The user will be registered
+            once validated.
+          content:
+            '*/*':
+              schema:
+                type: object
+                x-content-type: '*/*'
+      x-swagger-router-controller: AuthenticationController
+  /api/auth/login:
+    post:
+      tags:
+      - authentication-controller
+      summary: Log in a user
+      description: Authenticates a user and returns an authentication token.
+      operationId: login
+      requestBody:
+        description: The request body should contain the user credentials for login.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthenticationRequestDto'
+        required: true
+      responses:
+        "200":
+          description: Successfully logged in. Returns an authentication token.
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/AuthenticationResponseDto'
+        "401":
+          description: Unauthorized. This could occur if the provided credentials
+            are invalid.
+      x-swagger-router-controller: AuthenticationController
+  /api/artists:
+    post:
+      tags:
+      - artist-controller
+      summary: Create a new artist profile
+      description: Creates a new artist profile with the details provided in the request
+        body.
+      operationId: createArtistProfile
+      requestBody:
+        description: The request body should contain the details of the artist to
+          be created.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateArtistProfileRequestDto'
+        required: true
+      responses:
+        "201":
+          description: Artist profile successfully created.
+        "400":
+          description: Bad request. This could occur if the request body is malformed
+            or missing required fields.
+      x-swagger-router-controller: ArtistController
+  /api/albums:
+    post:
+      tags:
+      - album-controller
+      summary: Create a new album
+      description: Creates a new album with the details provided in the request body.
+      operationId: createNewAlbum
+      requestBody:
+        description: The request body should contain the details of the album to be
+          created.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAlbumRequestDto'
+        required: true
+      responses:
+        "201":
+          description: Album successfully created.
+        "400":
+          description: Bad request. This could occur if the request body is malformed
+            or missing required fields.
+      x-swagger-router-controller: AlbumController
+  /api/users:
+    get:
+      tags:
+      - user-controller
+      summary: Get authenticated user information
+      description: Retrieves information about the currently authenticated user.
+      operationId: getAuthUserInfo
+      responses:
+        "200":
+          description: Successfully retrieved authenticated user information.
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/User'
+      x-swagger-router-controller: UserController
+  /api/users/{id}:
+    get:
+      tags:
+      - user-controller
+      summary: Get user by ID
+      description: Retrieves information about a user specified by their `id`.
+      operationId: getUserById
+      parameters:
+      - name: id
+        in: path
+        description: The unique identifier of the user to be retrieved.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Successfully retrieved user information.
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/UserDto'
+        "404":
+          description: Not found. This could occur if the specified `id` does not
+            exist.
+      x-swagger-router-controller: UserController
+  /api/tracks/{id}:
+    get:
+      tags:
+      - track-controller
+      summary: Get track by ID
+      description: Retrieves detailed information about a track specified by its `id`.
+      operationId: getTrackById
+      parameters:
+      - name: id
+        in: path
+        description: The unique identifier of the track to be retrieved.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Successfully retrieved track details.
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/TrackDetail'
+        "404":
+          description: Not found. This could occur if the specified `id` does not
+            exist.
+      x-swagger-router-controller: TrackController
+  /api/tracks/search:
+    get:
+      tags:
+      - track-controller
+      summary: Search for tracks
+      description: Searches for tracks based on the provided query and optional page
+        parameter for pagination.
+      operationId: getAllTrack
+      parameters:
+      - name: q
+        in: query
+        description: The search query for finding tracks.
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: page
+        in: query
+        description: The page number for pagination (optional).
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: Successfully retrieved search results for tracks.
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/PageTrackDetail'
+        "400":
+          description: Bad request. This could occur if the query parameter is invalid.
+      x-swagger-router-controller: TrackController
+  /api/subscriptions/vnpay-callback:
+    get:
+      tags:
+      - subscription-controller
+      summary: VNPay subscription callback
+      description: Handles callback requests from VNPay after a subscription purchase.
+        This endpoint processes the callback and returns a response.
+      operationId: vnPayCallback
+      responses:
+        "200":
+          description: Successfully processed VNPay callback.
+          content:
+            '*/*':
+              schema:
+                type: string
+                description: A response message or status from VNPay.
+                x-content-type: '*/*'
+      x-swagger-router-controller: SubscriptionController
+  /api/playlists/{id}/tracks:
+    get:
+      tags:
+      - playlist-controller
+      summary: Get all tracks in a playlist
+      description: "Retrieves all tracks in the playlist identified by `id`. Optionally,\
+        \ the results can be paginated using the `page` parameter."
+      operationId: findAllPlaylistTracks
+      parameters:
+      - name: id
+        in: path
+        description: The unique identifier of the playlist.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      - name: page
+        in: query
+        description: The page number for pagination (optional).
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: Successfully retrieved all tracks in the playlist.
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/PagePlaylistTrack'
+        "404":
+          description: Not found. This could occur if the specified `id` does not
+            exist.
+      x-swagger-router-controller: PlaylistController
+  /api/playlists/search:
+    get:
+      tags:
+      - playlist-controller
+      summary: Search for playlists
+      description: Searches for playlists based on the provided query and optional
+        page parameter for pagination.
+      operationId: searchPlaylist
+      parameters:
+      - name: q
+        in: query
+        description: The search query for finding playlists.
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: page
+        in: query
+        description: The page number for pagination (optional).
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: Successfully retrieved search results for playlists.
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/PagePlaylist'
+        "400":
+          description: Bad request. This could occur if the query parameter is invalid.
+      x-swagger-router-controller: PlaylistController
+  /api/me/tracks/contains:
+    get:
+      tags:
+      - library-controller
+      summary: Check if a track is saved by the user
+      description: Checks if the track specified by `track_id` is saved in the user's
+        library.
+      operationId: checkIfUserSaved
+      parameters:
+      - name: track_id
+        in: query
+        description: The unique identifier of the track to check.
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Successfully checked if the track is saved.
+          content:
+            '*/*':
+              schema:
+                type: boolean
+                description: true if the track is saved by the user.
+                x-content-type: '*/*'
+      x-swagger-router-controller: LibraryController
+  /api/me/player:
+    get:
+      tags:
+      - player-controller
+      summary: Get current streaming session
+      description: "Retrieves the details of the current streaming session, including\
+        \ the currently playing track and playback status."
+      operationId: getStreamingSession
+      responses:
+        "200":
+          description: Successfully retrieved the current streaming session.
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/StreamingSession'
+      x-swagger-router-controller: PlayerController
+  /api/me/player/recent:
+    get:
+      tags:
+      - player-controller
+      summary: Get recent streaming history
+      description: Retrieves a list of recently played tracks by the user.
+      operationId: getStreamingHistory
+      responses:
+        "200":
+          description: Successfully retrieved the streaming history.
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StreamingHistory'
+                x-content-type: '*/*'
+      x-swagger-router-controller: PlayerController
+  /api/me/player/play/{trackId}:
+    get:
+      tags:
+      - player-controller
+      summary: Play a specific track
+      description: Starts playing the track specified by `trackId`. Additional parameters
+        can specify the source of the track and playback mode.
+      operationId: playTrack
+      parameters:
+      - name: trackId
+        in: path
+        description: The unique identifier of the track to be played.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      - name: source_id
+        in: query
+        description: "The ID of the source from which the track is being played (e.g.,\
+          \ playlist or album)."
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: integer
+          format: int64
+      - name: source_type
+        in: query
+        description: "The type of the source from which the track is being played.\
+          \ Possible values are `playlist`, `album`, `track`, `liked`."
+        required: true
+        style: form
+        explode: true
+        schema:
+          pattern: playlist|album|track|liked
+          type: string
+      - name: mode
+        in: query
+        description: "The playback mode. Possible values are `shuffle`, `repeat`,\
+          \ `sequential`. This parameter is optional."
+        required: false
+        style: form
+        explode: true
+        schema:
+          pattern: shuffle|repeat|sequential
+          type: string
+      responses:
+        "200":
+          description: Successfully started playing the track.
+          content:
+            '*/*':
+              schema:
+                type: string
+                description: A message indicating the status of the playback action.
+                x-content-type: '*/*'
+      x-swagger-router-controller: PlayerController
+  /api/me/following/contains:
+    get:
+      tags:
+      - library-controller
+      summary: Check if an artist is followed by the user
+      description: Checks if the artist specified by `artist_id` is followed by the
+        user.
+      operationId: checkIfUserFollow
+      parameters:
+      - name: artist_id
+        in: query
+        description: The unique identifier of the artist to check.
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Successfully checked if the artist is followed.
+          content:
+            '*/*':
+              schema:
+                type: boolean
+                description: true if the artist is followed by the user
+                x-content-type: '*/*'
+      x-swagger-router-controller: LibraryController
+  /api/artists/{id}:
+    get:
+      tags:
+      - artist-controller
+      summary: Get artist by ID
+      description: Retrieves detailed information about an artist specified by `id`.
+      operationId: findArtistById
+      parameters:
+      - name: id
+        in: path
+        description: The unique identifier of the artist to be retrieved.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Successfully retrieved artist details.
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ArtistProfile'
+        "404":
+          description: Not found. This could occur if the specified `id` does not
+            exist.
+      x-swagger-router-controller: ArtistController
+  /api/artists/search:
+    get:
+      tags:
+      - artist-controller
+      summary: Search for artists
+      description: Searches for artists based on the provided query and optional page
+        parameter for pagination.
+      operationId: findAllArtist
+      parameters:
+      - name: q
+        in: query
+        description: The search query for finding artists.
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: page
+        in: query
+        description: The page number for pagination (optional).
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: Successfully retrieved search results for artists.
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/PageArtist'
+        "400":
+          description: Bad request. This could occur if the query parameter is invalid.
+      x-swagger-router-controller: ArtistController
+  /api/albums/{id}:
+    get:
+      tags:
+      - album-controller
+      summary: Get album by ID
+      description: Retrieves detailed information about an album specified by `id`.
+      operationId: findAlbumById
+      parameters:
+      - name: id
+        in: path
+        description: The unique identifier of the album to be retrieved.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Successfully retrieved album details.
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/AlbumDto'
+        "404":
+          description: Not found. This could occur if the specified `id` does not
+            exist.
+      x-swagger-router-controller: AlbumController
+  /api/albums/{id}/tracks:
+    get:
+      tags:
+      - album-controller
+      summary: Get tracks of an album
+      description: Retrieves a list of tracks in the album specified by `id`.
+      operationId: findAlbumTracks
+      parameters:
+      - name: id
+        in: path
+        description: The unique identifier of the album to retrieve tracks from.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Successfully retrieved the list of tracks in the album.
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TrackDetail'
+                x-content-type: '*/*'
+        "404":
+          description: Not found. This could occur if the specified `id` does not
+            exist.
+      x-swagger-router-controller: AlbumController
+  /api/albums/search:
+    get:
+      tags:
+      - album-controller
+      summary: Search for albums
+      description: Searches for albums based on the provided query and optional pagination
+        parameters.
+      operationId: searchAlbum
+      parameters:
+      - name: q
+        in: query
+        description: The search query for finding albums.
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: page
+        in: query
+        description: The page number for pagination (optional).
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: Successfully retrieved search results for albums.
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/PageAlbum'
+        "400":
+          description: Bad request. This could occur if the query parameter is invalid.
+      x-swagger-router-controller: AlbumController
+  /api/playlists/{playlistId}/tracks/{trackId}:
+    delete:
+      tags:
+      - playlist-controller
+      summary: Remove a track from a playlist
+      description: Removes the track specified by `trackId` from the playlist specified
+        by `playlistId`.
+      operationId: deleteTrack
+      parameters:
+      - name: playlistId
+        in: path
+        description: The unique identifier of the playlist from which the track will
+          be removed.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      - name: trackId
+        in: path
+        description: The unique identifier of the track to be removed.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Successfully removed the track from the playlist.
+      x-swagger-router-controller: PlaylistController
+  /api/albums/{albumId}/artists/{artistId}:
+    delete:
+      tags:
+      - album-controller
+      summary: Unlink an artist from an album
+      description: Removes the association between the artist specified by `artistId`
+        and the album specified by `albumId`.
+      operationId: unlinkArtist
+      parameters:
+      - name: albumId
+        in: path
+        description: The unique identifier of the album from which the artist will
+          be unlinked.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      - name: artistId
+        in: path
+        description: The unique identifier of the artist to be unlinked from the album.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Successfully unlinked the artist from the album.
+      x-swagger-router-controller: AlbumController
+components:
+  schemas:
+    PlaylistDto:
+      type: object
+      properties:
+        userId:
+          type: integer
+          format: int64
+        name:
+          type: string
+        description:
+          type: string
+        isPublic:
+          type: boolean
+        coverUrl:
+          type: string
+    AlbumArtistCRUDRequestDto:
+      required:
+      - artistId
+      - role
+      type: object
+      properties:
+        albumId:
+          type: integer
+          format: int64
+        artistId:
+          type: integer
+          format: int64
+        role:
+          pattern: main|support
+          type: string
+    VNPayResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        paymentUrl:
+          type: string
+      example:
+        code: code
+        paymentUrl: paymentUrl
+        message: message
+    AuthenticationRequestDto:
+      required:
+      - email
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          maxLength: 2147483647
+          minLength: 6
+          type: string
+    AuthenticationResponseDto:
+      type: object
+      properties:
+        token:
+          type: string
+      example:
+        token: token
+    CreateArtistProfileRequestDto:
+      required:
+      - stageName
+      - userId
+      type: object
+      properties:
+        userId:
+          type: integer
+          format: int64
+        stageName:
+          type: string
+        bio:
+          type: string
+        profilePictureUrl:
+          type: string
+    ArtistRoleDto:
+      required:
+      - artistId
+      - role
+      type: object
+      properties:
+        artistId:
+          type: integer
+          format: int64
+        role:
+          pattern: main|support
+          type: string
+    CreateAlbumRequestDto:
+      required:
+      - artistRoles
+      - isSingle
+      - releaseDate
+      - title
+      type: object
+      properties:
+        title:
+          maxLength: 100
+          minLength: 1
+          type: string
+        releaseDate:
+          type: string
+          format: date
+        isSingle:
+          type: boolean
+        coverUrl:
+          maxLength: 255
+          minLength: 0
+          type: string
+        artistRoles:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArtistRoleDto'
+    Role:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+      example:
+        name: name
+        id: 6
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        firstname:
+          type: string
+        lastname:
+          type: string
+        dob:
+          type: string
+          format: date
+        email:
+          type: string
+        password:
+          type: string
+        accountLocked:
+          type: boolean
+        enabled:
+          type: boolean
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+        isPremium:
+          type: boolean
+      example:
+        accountLocked: true
+        firstname: firstname
+        password: password
+        dob: 2000-01-23
+        roles:
+        - name: name
+          id: 6
+        - name: name
+          id: 6
+        id: 0
+        isPremium: true
+        email: email
+        enabled: true
+        lastname: lastname
+    UserDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        firstname:
+          type: string
+        lastname:
+          type: string
+        dob:
+          type: string
+          format: date
+        email:
+          type: string
+        isPremium:
+          type: boolean
+        roles:
+          type: array
+          items:
+            type: string
+      example:
+        firstname: firstname
+        dob: 2000-01-23
+        roles:
+        - roles
+        - roles
+        id: 0
+        isPremium: true
+        email: email
+        lastname: lastname
+    AlbumArtist:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        stageName:
+          type: string
+        profilePictureUrl:
+          type: string
+        role:
+          type: string
+      example:
+        profilePictureUrl: profilePictureUrl
+        stageName: stageName
+        role: role
+        id: 4
+    TrackAlbum:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        coverUrl:
+          type: string
+        artists:
+          type: array
+          items:
+            $ref: '#/components/schemas/AlbumArtist'
+      example:
+        coverUrl: coverUrl
+        artists:
+        - profilePictureUrl: profilePictureUrl
+          stageName: stageName
+          role: role
+          id: 4
+        - profilePictureUrl: profilePictureUrl
+          stageName: stageName
+          role: role
+          id: 4
+        id: 2
+        title: title
+    TrackDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        duration:
+          type: integer
+          format: int32
+        streamCount:
+          type: integer
+          format: int64
+        album:
+          $ref: '#/components/schemas/TrackAlbum'
+      example:
+        duration: 9
+        album:
+          coverUrl: coverUrl
+          artists:
+          - profilePictureUrl: profilePictureUrl
+            stageName: stageName
+            role: role
+            id: 4
+          - profilePictureUrl: profilePictureUrl
+            stageName: stageName
+            role: role
+            id: 4
+          id: 2
+          title: title
+        id: 7
+        streamCount: 3
+        title: title
+    PageTrackDetail:
+      type: object
+      properties:
+        page:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        totalItems:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int32
+        hasNext:
+          type: boolean
+        hasPrevious:
+          type: boolean
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrackDetail'
+      example:
+        totalItems: 1
+        size: 6
+        totalPages: 5
+        hasPrevious: true
+        hasNext: true
+        page: 0
+        items:
+        - duration: 9
+          album:
+            coverUrl: coverUrl
+            artists:
+            - profilePictureUrl: profilePictureUrl
+              stageName: stageName
+              role: role
+              id: 4
+            - profilePictureUrl: profilePictureUrl
+              stageName: stageName
+              role: role
+              id: 4
+            id: 2
+            title: title
+          id: 7
+          streamCount: 3
+          title: title
+        - duration: 9
+          album:
+            coverUrl: coverUrl
+            artists:
+            - profilePictureUrl: profilePictureUrl
+              stageName: stageName
+              role: role
+              id: 4
+            - profilePictureUrl: profilePictureUrl
+              stageName: stageName
+              role: role
+              id: 4
+            id: 2
+            title: title
+          id: 7
+          streamCount: 3
+          title: title
+    Playlist:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        userId:
+          type: integer
+          format: int64
+        name:
+          type: string
+        description:
+          type: string
+        isPublic:
+          type: boolean
+        coverUrl:
+          type: string
+        totalTrack:
+          type: integer
+          format: int32
+      example:
+        coverUrl: coverUrl
+        name: name
+        description: description
+        isPublic: true
+        id: 0
+        userId: 6
+        totalTrack: 1
+    PagePlaylistTrack:
+      type: object
+      properties:
+        page:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        totalItems:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int32
+        hasNext:
+          type: boolean
+        hasPrevious:
+          type: boolean
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlaylistTrack'
+      example:
+        totalItems: 1
+        size: 6
+        totalPages: 5
+        hasPrevious: true
+        hasNext: true
+        page: 0
+        items:
+        - addedAt: 2000-01-23T04:56:07.000+00:00
+          addedBy: 2
+          position: 5
+          track:
+            duration: 9
+            album:
+              coverUrl: coverUrl
+              artists:
+              - profilePictureUrl: profilePictureUrl
+                stageName: stageName
+                role: role
+                id: 4
+              - profilePictureUrl: profilePictureUrl
+                stageName: stageName
+                role: role
+                id: 4
+              id: 2
+              title: title
+            id: 7
+            streamCount: 3
+            title: title
+        - addedAt: 2000-01-23T04:56:07.000+00:00
+          addedBy: 2
+          position: 5
+          track:
+            duration: 9
+            album:
+              coverUrl: coverUrl
+              artists:
+              - profilePictureUrl: profilePictureUrl
+                stageName: stageName
+                role: role
+                id: 4
+              - profilePictureUrl: profilePictureUrl
+                stageName: stageName
+                role: role
+                id: 4
+              id: 2
+              title: title
+            id: 7
+            streamCount: 3
+            title: title
+    PlaylistTrack:
+      type: object
+      properties:
+        position:
+          type: integer
+          format: int32
+        addedAt:
+          type: string
+          format: date-time
+        addedBy:
+          type: integer
+          format: int64
+        track:
+          $ref: '#/components/schemas/TrackDetail'
+      example:
+        addedAt: 2000-01-23T04:56:07.000+00:00
+        addedBy: 2
+        position: 5
+        track:
+          duration: 9
+          album:
+            coverUrl: coverUrl
+            artists:
+            - profilePictureUrl: profilePictureUrl
+              stageName: stageName
+              role: role
+              id: 4
+            - profilePictureUrl: profilePictureUrl
+              stageName: stageName
+              role: role
+              id: 4
+            id: 2
+            title: title
+          id: 7
+          streamCount: 3
+          title: title
+    PagePlaylist:
+      type: object
+      properties:
+        page:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        totalItems:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int32
+        hasNext:
+          type: boolean
+        hasPrevious:
+          type: boolean
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Playlist'
+      example:
+        totalItems: 1
+        size: 6
+        totalPages: 5
+        hasPrevious: true
+        hasNext: true
+        page: 0
+        items:
+        - coverUrl: coverUrl
+          name: name
+          description: description
+          isPublic: true
+          id: 0
+          userId: 6
+          totalTrack: 1
+        - coverUrl: coverUrl
+          name: name
+          description: description
+          isPublic: true
+          id: 0
+          userId: 6
+          totalTrack: 1
+    MediaItem:
+      type: object
+    QueueItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        itemType:
+          type: string
+          enum:
+          - TRACK
+          - AD
+      example:
+        itemType: TRACK
+        id: 3
+    StreamingSession:
+      type: object
+      properties:
+        userId:
+          type: integer
+          format: int64
+        currentMedia:
+          $ref: '#/components/schemas/MediaItem'
+        streamingSource:
+          $ref: '#/components/schemas/StreamingSource'
+        playbackMode:
+          type: string
+          enum:
+          - SEQUENTIAL
+          - SHUFFLE
+          - REPEAT
+        lastRecordedTime:
+          type: integer
+          format: int64
+        accumulatedTime:
+          type: integer
+          format: int64
+        deviceId:
+          type: string
+        historyIndex:
+          type: integer
+          format: int32
+        lastPlayedAdTime:
+          type: integer
+          format: int64
+        adInterval:
+          type: integer
+          format: int32
+        adCounter:
+          type: integer
+          format: int32
+        itemQueue:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueueItem'
+        playing:
+          type: boolean
+      example:
+        adInterval: 7
+        currentMedia: {}
+        itemQueue:
+        - itemType: TRACK
+          id: 3
+        - itemType: TRACK
+          id: 3
+        lastRecordedTime: 1
+        historyIndex: 5
+        adCounter: 9
+        streamingSource:
+          sourceId: 6
+          sourceType: PLAYLIST
+        lastPlayedAdTime: 2
+        userId: 0
+        deviceId: deviceId
+        accumulatedTime: 5
+        playbackMode: SEQUENTIAL
+        playing: true
+    StreamingSource:
+      type: object
+      properties:
+        sourceId:
+          type: integer
+          format: int64
+        sourceType:
+          type: string
+          enum:
+          - PLAYLIST
+          - ALBUM
+          - LIKED
+      example:
+        sourceId: 6
+        sourceType: PLAYLIST
+    StreamingHistory:
+      type: object
+      properties:
+        track:
+          $ref: '#/components/schemas/TrackDetail'
+        listeningTime:
+          type: integer
+          format: int64
+        timestamp:
+          type: string
+          format: date-time
+      example:
+        listeningTime: 0
+        track:
+          duration: 9
+          album:
+            coverUrl: coverUrl
+            artists:
+            - profilePictureUrl: profilePictureUrl
+              stageName: stageName
+              role: role
+              id: 4
+            - profilePictureUrl: profilePictureUrl
+              stageName: stageName
+              role: role
+              id: 4
+            id: 2
+            title: title
+          id: 7
+          streamCount: 3
+          title: title
+        timestamp: 2000-01-23T04:56:07.000+00:00
+    Artist:
+      required:
+      - followerCount
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        stageName:
+          type: string
+        bio:
+          type: string
+        profilePictureUrl:
+          type: string
+        followerCount:
+          type: integer
+          format: int32
+      example:
+        profilePictureUrl: profilePictureUrl
+        stageName: stageName
+        bio: bio
+        id: 5
+        followerCount: 2
+    PageArtist:
+      type: object
+      properties:
+        page:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        totalItems:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int32
+        hasNext:
+          type: boolean
+        hasPrevious:
+          type: boolean
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Artist'
+      example:
+        totalItems: 1
+        size: 6
+        totalPages: 5
+        hasPrevious: true
+        hasNext: true
+        page: 0
+        items:
+        - profilePictureUrl: profilePictureUrl
+          stageName: stageName
+          bio: bio
+          id: 5
+          followerCount: 2
+        - profilePictureUrl: profilePictureUrl
+          stageName: stageName
+          bio: bio
+          id: 5
+          followerCount: 2
+    ArtistAlbum:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        releaseDate:
+          type: string
+          format: date
+        isSingle:
+          type: boolean
+        coverUrl:
+          type: string
+        role:
+          type: string
+      example:
+        coverUrl: coverUrl
+        role: role
+        releaseDate: 2000-01-23
+        isSingle: true
+        id: id
+        title: title
+    ArtistProfile:
+      required:
+      - followerCount
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        stageName:
+          type: string
+        bio:
+          type: string
+        profilePictureUrl:
+          type: string
+        followerCount:
+          type: integer
+          format: int32
+        albums:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArtistAlbum'
+      example:
+        profilePictureUrl: profilePictureUrl
+        albums:
+        - coverUrl: coverUrl
+          role: role
+          releaseDate: 2000-01-23
+          isSingle: true
+          id: id
+          title: title
+        - coverUrl: coverUrl
+          role: role
+          releaseDate: 2000-01-23
+          isSingle: true
+          id: id
+          title: title
+        stageName: stageName
+        bio: bio
+        id: 0
+        followerCount: 6
+    AlbumDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        isSingle:
+          type: boolean
+        coverUrl:
+          type: string
+        releaseDate:
+          type: string
+          format: date
+        artists:
+          type: array
+          items:
+            $ref: '#/components/schemas/AlbumArtist'
+        tracks:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrackDetail'
+      example:
+        coverUrl: coverUrl
+        releaseDate: 2000-01-23
+        artists:
+        - profilePictureUrl: profilePictureUrl
+          stageName: stageName
+          role: role
+          id: 4
+        - profilePictureUrl: profilePictureUrl
+          stageName: stageName
+          role: role
+          id: 4
+        isSingle: true
+        id: 0
+        title: title
+        tracks:
+        - duration: 9
+          album:
+            coverUrl: coverUrl
+            artists:
+            - profilePictureUrl: profilePictureUrl
+              stageName: stageName
+              role: role
+              id: 4
+            - profilePictureUrl: profilePictureUrl
+              stageName: stageName
+              role: role
+              id: 4
+            id: 2
+            title: title
+          id: 7
+          streamCount: 3
+          title: title
+        - duration: 9
+          album:
+            coverUrl: coverUrl
+            artists:
+            - profilePictureUrl: profilePictureUrl
+              stageName: stageName
+              role: role
+              id: 4
+            - profilePictureUrl: profilePictureUrl
+              stageName: stageName
+              role: role
+              id: 4
+            id: 2
+            title: title
+          id: 7
+          streamCount: 3
+          title: title
+    Album:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        isSingle:
+          type: boolean
+        coverUrl:
+          type: string
+        releaseDate:
+          type: string
+          format: date
+      example:
+        coverUrl: coverUrl
+        releaseDate: 2000-01-23
+        isSingle: true
+        id: 5
+        title: title
+    PageAlbum:
+      type: object
+      properties:
+        page:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        totalItems:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int32
+        hasNext:
+          type: boolean
+        hasPrevious:
+          type: boolean
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Album'
+      example:
+        totalItems: 1
+        size: 6
+        totalPages: 5
+        hasPrevious: true
+        hasNext: true
+        page: 0
+        items:
+        - coverUrl: coverUrl
+          releaseDate: 2000-01-23
+          isSingle: true
+          id: 5
+          title: title
+        - coverUrl: coverUrl
+          releaseDate: 2000-01-23
+          isSingle: true
+          id: 5
+          title: title
+    api_tracks_body:
+      required:
+      - file
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
