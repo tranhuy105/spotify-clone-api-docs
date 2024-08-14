@@ -6,8 +6,6 @@ info:
     \ manage playlists and their tracks."
   version: "1.0"
 servers:
-- url: https://virtserver.swaggerhub.com/IMHUY105_1/spotify-clone/1.0
-  description: SwaggerHub API Auto Mocking
 - url: http://localhost:8080
   description: Local development server for testing and development.
 paths:
@@ -82,7 +80,7 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/Playlist'
+                $ref: '#/components/schemas/PlaylistDto'
         "404":
           description: Not found. This could occur if the specified `id` does not
             exist.
@@ -121,6 +119,53 @@ paths:
           description: Not found. This could occur if the specified `id` does not
             exist.
       x-swagger-router-controller: PlaylistController
+    delete:
+      tags:
+        - playlist-controller
+      summary: Delete a playlist by ID
+      description: Deletes the playlist specified by its unique identifier.
+      operationId: deletePlaylist
+      parameters:
+        - name: id
+          in: path
+          description: The unique identifier of the playlist to be deleted.
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "204":
+          description: Successfully deleted the playlist. No content returned.
+        "400":
+          description: Bad request. This could occur if the request is invalid.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Bad Request"
+        "401":
+          description: Unauthorized access due to invalid or missing token.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Unauthorized"
+        "403":
+          description: Forbidden access due to insufficient permissions.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Forbidden"
+        "404":
+          description: Not found. This could occur if the specified `id` does not exist.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Not Found"
   /api/me/tracks:
     get:
       tags:
@@ -472,6 +517,121 @@ paths:
           description: Bad request. This could occur if the `album_id` or `title`
             parameters are invalid or the file upload is malformed.
       x-swagger-router-controller: TrackController
+  /api/validate-token:
+    post:
+      tags:
+        - authentication-controller
+      summary: Validate authentication token
+      description: Validates the provided authentication token and returns a confirmation response.
+      operationId: validateToken
+      responses:
+        "200":
+          description: Token is valid.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "OK"
+        "401":
+          description: Unauthorized access due to invalid or missing token.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Unauthorized"
+        "403":
+          description: Forbidden access due to insufficient permissions.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Forbidden"
+  /api/artists/{id}/related:
+    get:
+      tags:
+        - artist-controller
+      summary: Find related artists by ID
+      description: Retrieves a list of artists related to the specified artist ID. You can also limit the number of related artists returned.
+      operationId: findRelatedArtistById
+      parameters:
+        - name: id
+          in: path
+          description: The unique identifier of the artist for which related artists are to be found.
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: limit
+          in: query
+          description: The maximum number of related artists to return.
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: Successfully retrieved the list of related artists.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Artist'
+  /api/artists/{id}/top-tracks:
+    get:
+      tags:
+        - artist-controller
+      summary: Find top tracks by artist ID
+      description: Retrieves a list of top tracks for the specified artist ID.
+      operationId: findTopTrackByArtistId
+      parameters:
+        - name: id
+          in: path
+          description: The unique identifier of the artist for which top tracks are to be found.
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Successfully retrieved the list of top tracks for the artist.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TrackDetail'    
+  /api/browse/{id}/related:
+    get:
+      tags:
+        - album-controller
+      summary: Find related albums by ID
+      description: Retrieves a list of albums related to the specified album ID. You can also limit the number of related albums returned.
+      operationId: findRelatedAlbumsById
+      parameters:
+        - name: id
+          in: path
+          description: The unique identifier of the album for which related albums are to be found.
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: limit
+          in: query
+          description: The maximum number of related albums to return.
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: Successfully retrieved the list of related albums.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Album'
   /api/subscriptions/purchase:
     post:
       tags:
@@ -922,29 +1082,32 @@ paths:
   /api/me/tracks/contains:
     get:
       tags:
-      - library-controller
-      summary: Check if a track is saved by the user
-      description: Checks if the track specified by `track_id` is saved in the user's
-        library.
-      operationId: checkIfUserSaved
+        - library-controller
+      summary: Check if multiple tracks are saved by the user
+      description: Checks if the tracks specified by `track_ids` are saved in the user's library.
+      operationId: checkIfUserSavedMultiple
       parameters:
-      - name: track_id
-        in: query
-        description: The unique identifier of the track to check.
-        required: true
-        style: form
-        explode: true
-        schema:
-          type: integer
-          format: int64
+        - name: track_ids
+          in: query
+          description: The unique identifiers of the tracks to check. Multiple IDs can be provided.
+          required: true
+          style: form
+          explode: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int64
       responses:
         "200":
-          description: Successfully checked if the track is saved.
+          description: Successfully checked if the tracks are saved.
           content:
             '*/*':
               schema:
-                type: boolean
-                description: true if the track is saved by the user.
+                type: array
+                items:
+                  type: boolean
+                description: A list of boolean values indicating whether each track is saved by the user.
                 x-content-type: '*/*'
       x-swagger-router-controller: LibraryController
   /api/me/player:
@@ -1042,29 +1205,32 @@ paths:
   /api/me/following/contains:
     get:
       tags:
-      - library-controller
-      summary: Check if an artist is followed by the user
-      description: Checks if the artist specified by `artist_id` is followed by the
-        user.
-      operationId: checkIfUserFollow
+        - library-controller
+      summary: Check if multiple artists are followed by the user
+      description: Checks if the artists specified by `artist_ids` are followed by the user.
+      operationId: checkIfUserFollowMultiple
       parameters:
-      - name: artist_id
-        in: query
-        description: The unique identifier of the artist to check.
-        required: true
-        style: form
-        explode: true
-        schema:
-          type: integer
-          format: int64
+        - name: artist_ids
+          in: query
+          description: The unique identifiers of the artists to check. Multiple IDs can be provided.
+          required: true
+          style: form
+          explode: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int64
       responses:
         "200":
-          description: Successfully checked if the artist is followed.
+          description: Successfully checked if the artists are followed.
           content:
             '*/*':
               schema:
-                type: boolean
-                description: true if the artist is followed by the user
+                type: array
+                items:
+                  type: boolean
+                description: A list of boolean values indicating whether each artist is followed by the user.
                 x-content-type: '*/*'
       x-swagger-router-controller: LibraryController
   /api/artists/{id}:
@@ -1095,6 +1261,100 @@ paths:
           description: Not found. This could occur if the specified `id` does not
             exist.
       x-swagger-router-controller: ArtistController
+    put:
+      tags:
+        - artist-controller
+      summary: Update artist profile
+      description: Updates the profile of the artist specified by the ID using the provided artist profile data.
+      operationId: updateArtist
+      parameters:
+        - name: id
+          in: path
+          description: The unique identifier of the artist to be updated.
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        description: Data to update the artist profile.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Artist'
+      responses:
+        "200":
+          description: Successfully updated the artist profile.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtistProfile'
+        "400":
+          description: Bad request due to invalid input data.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Bad Request"
+        "401":
+          description: Unauthorized access due to invalid or missing token.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Unauthorized"
+        "403":
+          description: Forbidden access due to insufficient permissions.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Forbidden"
+        "404":
+          description: Artist not found.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Not Found"
+    delete:
+      tags:
+        - artist-controller
+      summary: Delete an artist by ID
+      description: Deletes the artist specified by the ID. Only authorized users with sufficient permissions can perform this action.
+      operationId: deleteArtist
+      parameters:
+        - name: id
+          in: path
+          description: The unique identifier of the artist to be deleted.
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "204":
+          description: Successfully deleted the artist.
+        "401":
+          description: Unauthorized access due to invalid or missing token.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Unauthorized"
+        "403":
+          description: Forbidden access due to insufficient permissions.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Forbidden"
+        "404":
+          description: Artist not found.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Not Found"
   /api/artists/search:
     get:
       tags:
@@ -1159,6 +1419,108 @@ paths:
           description: Not found. This could occur if the specified `id` does not
             exist.
       x-swagger-router-controller: AlbumController
+    put:
+      tags:
+        - album-controller
+      summary: Update an album by ID
+      description: Updates the album specified by the ID using the provided album data.
+      operationId: updateAlbum
+      parameters:
+        - name: id
+          in: path
+          description: The unique identifier of the album to be updated.
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        description: Data to update the album.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAlbumRequestDto'
+      responses:
+        "200":
+          description: Successfully updated the album.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlbumDto'
+        "400":
+          description: Bad request due to invalid input data.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Bad Request"
+        "401":
+          description: Unauthorized access due to invalid or missing token.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Unauthorized"
+        "403":
+          description: Forbidden access due to insufficient permissions.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Forbidden"
+        "404":
+          description: Album not found.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Not Found"
+
+    delete:
+      tags:
+        - album-controller
+      summary: Delete an album by ID
+      description: Deletes the album specified by the ID. Only authorized users with sufficient permissions can perform this action.
+      operationId: deleteAlbum
+      parameters:
+        - name: id
+          in: path
+          description: The unique identifier of the album to be deleted.
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "204":
+          description: Successfully deleted the album.
+        "400":
+          description: Bad request due to invalid input data.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Bad Request"
+        "401":
+          description: Unauthorized access due to invalid or missing token.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Unauthorized"
+        "403":
+          description: Forbidden access due to insufficient permissions.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Forbidden"
+        "404":
+          description: Album not found.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Not Found"
   /api/albums/{id}/tracks:
     get:
       tags:
@@ -1290,6 +1652,109 @@ paths:
         "200":
           description: Successfully unlinked the artist from the album.
       x-swagger-router-controller: AlbumController
+  /api/browse/genres:
+    get:
+      tags:
+        - browse-controller
+      summary: Get a list of genres
+      description: Retrieves a list of all genres.
+      operationId: getGenres
+      responses:
+        "200":
+          description: Successfully retrieved the list of genres.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Genre'
+
+  /api/browse/genres/{genre_id}:
+    get:
+      tags:
+        - browse-controller
+      summary: Get a single genre
+      description: Retrieves details of a single genre specified by `genre_id`.
+      operationId: getSingleGenre
+      parameters:
+        - name: genre_id
+          in: path
+          description: The unique identifier of the genre to retrieve.
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Successfully retrieved the genre.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Genre'
+
+  /api/browse/genres/{genre_id}/playlists:
+    get:
+      tags:
+        - browse-controller
+      summary: Get system generated featured playlists seed by genre
+      description: Retrieves a list of featured playlists associated with the specified genre.
+      operationId: getGenrePlaylists
+      parameters:
+        - name: genre_id
+          in: path
+          description: The unique identifier of the genre for which playlists are to be retrieved.
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Successfully retrieved the playlists for the genre.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Playlist'
+
+  /api/browse/genres/{genre_id}/artists:
+    get:
+      tags:
+        - browse-controller
+      summary: Get featured artists by genre
+      description: Retrieves a paginated list of featured artists associated with the specified genre.
+      operationId: getGenreArtists
+      parameters:
+        - name: genre_id
+          in: path
+          description: The unique identifier of the genre for which artists are to be retrieved.
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: page
+          in: query
+          description: The page number to retrieve for pagination.
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: sort_by
+          in: query
+          description: The sorting criteria. Can be "top" or "new".
+          required: false
+          schema:
+            type: string
+            enum:
+              - top
+              - new
+      responses:
+        "200":
+          description: Successfully retrieved the paginated list of artists for the genre.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageArtist'
 components:
   schemas:
     PlaylistDto:
@@ -1829,6 +2294,14 @@ components:
       example:
         itemType: TRACK
         id: 3
+    Genre:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
     StreamingSession:
       type: object
       properties:
