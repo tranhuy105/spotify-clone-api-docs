@@ -39,7 +39,7 @@ paths:
       - name: new_position
         in: query
         description: The new position in the playlist where the track should be moved
-          to. Positions are zero-based.
+          to. Positions are one-based.
         required: true
         style: form
         explode: true
@@ -1986,6 +1986,8 @@ components:
             $ref: '#/components/schemas/AlbumArtist'
       example:
         coverUrl: coverUrl
+        id: 2
+        title: title
         artists:
         - profilePictureUrl: profilePictureUrl
           stageName: stageName
@@ -1995,8 +1997,6 @@ components:
           stageName: stageName
           role: role
           id: 4
-        id: 2
-        title: title
     TrackDetail:
       type: object
       properties:
@@ -2014,8 +2014,13 @@ components:
         album:
           $ref: '#/components/schemas/TrackAlbum'
       example:
+        id: 7
+        streamCount: 3
+        title: title
         duration: 9
         album:
+          id: 2
+          title: title
           coverUrl: coverUrl
           artists:
           - profilePictureUrl: profilePictureUrl
@@ -2026,11 +2031,6 @@ components:
             stageName: stageName
             role: role
             id: 4
-          id: 2
-          title: title
-        id: 7
-        streamCount: 3
-        title: title
     PageTrackDetail:
       type: object
       properties:
@@ -2159,8 +2159,13 @@ components:
           addedBy: 2
           position: 5
           track:
+            id: 7
+            streamCount: 3
+            title: title
             duration: 9
             album:
+              id: 2
+              title: title
               coverUrl: coverUrl
               artists:
               - profilePictureUrl: profilePictureUrl
@@ -2171,17 +2176,17 @@ components:
                 stageName: stageName
                 role: role
                 id: 4
-              id: 2
-              title: title
-            id: 7
-            streamCount: 3
-            title: title
         - addedAt: 2000-01-23T04:56:07.000+00:00
           addedBy: 2
           position: 5
           track:
+            id: 7
+            streamCount: 3
+            title: title
             duration: 9
             album:
+              id: 2
+              title: title
               coverUrl: coverUrl
               artists:
               - profilePictureUrl: profilePictureUrl
@@ -2192,11 +2197,7 @@ components:
                 stageName: stageName
                 role: role
                 id: 4
-              id: 2
-              title: title
-            id: 7
-            streamCount: 3
-            title: title
+              
     PlaylistTrack:
       type: object
       properties:
@@ -2217,6 +2218,9 @@ components:
         position: 5
         track:
           duration: 9
+          id: 7
+          streamCount: 3
+          title: title
           album:
             coverUrl: coverUrl
             artists:
@@ -2230,9 +2234,6 @@ components:
               id: 4
             id: 2
             title: title
-          id: 7
-          streamCount: 3
-          title: title
     PagePlaylist:
       type: object
       properties:
@@ -2392,7 +2393,11 @@ components:
           format: date-time
       example:
         listeningTime: 0
+        timestamp: 2000-01-23T04:56:07.000+00:00
         track:
+          id: 7
+          streamCount: 3
+          title: title
           duration: 9
           album:
             coverUrl: coverUrl
@@ -2407,10 +2412,6 @@ components:
               id: 4
             id: 2
             title: title
-          id: 7
-          streamCount: 3
-          title: title
-        timestamp: 2000-01-23T04:56:07.000+00:00
     Artist:
       required:
       - followerCount
