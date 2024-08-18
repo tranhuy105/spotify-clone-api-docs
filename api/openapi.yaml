@@ -504,12 +504,16 @@ paths:
         schema:
           type: string
       requestBody:
-        description: The request body should contain the binary file of the track
-          to be uploaded.
+        description: The new file for the track.
+        required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
-              $ref: '#/components/schemas/api_tracks_body'
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
       responses:
         "201":
           description: Track successfully created and uploaded.
@@ -546,6 +550,67 @@ paths:
               schema:
                 type: string
                 example: "Forbidden"
+  /api/tracks/{id}/genres:
+    put:
+      tags:
+        - track-controller
+      summary: Update track's genres
+      description: Update genres to a track, a list of genre IDs must be provided.
+      operationId: addGenresToTrack
+      parameters:
+        - name: id
+          in: path
+          description: The unique identifier of the track.
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: genreIds
+          in: query
+          description: The list of genre IDs to add to the track.
+          required: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int64
+      responses:
+        "200":
+          description: Genres successfully updated to the track.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Genres successfully updated to the track."
+        "400":
+          description: Bad request due to invalid input data.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Bad Request"
+        "401":
+          description: Unauthorized access due to invalid or missing token.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Unauthorized"
+        "403":
+          description: Forbidden access due to insufficient permissions.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Forbidden"
+        "404":
+          description: Track or genre not found.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Not Found"
+
   /api/artists/{id}/related:
     get:
       tags:
@@ -880,21 +945,6 @@ paths:
           description: Bad request. This could occur if the request body is malformed
             or missing required fields.
       x-swagger-router-controller: AlbumController
-  /api/users:
-    get:
-      tags:
-      - user-controller
-      summary: Get authenticated user information
-      description: Retrieves information about the currently authenticated user.
-      operationId: getAuthUserInfo
-      responses:
-        "200":
-          description: Successfully retrieved authenticated user information.
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/User'
-      x-swagger-router-controller: UserController
   /api/users/{id}:
     get:
       tags:
@@ -923,6 +973,78 @@ paths:
           description: Not found. This could occur if the specified `id` does not
             exist.
       x-swagger-router-controller: UserController
+  /api/users/request-artist:
+    post:
+      tags:
+        - user-controller
+      summary: Request Artist Role
+      description: Allows a user to request an artist role by submitting details about their artistry.
+      operationId: requestArtistRole
+      requestBody:
+        description: Details about the artist role request.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArtistRequest'
+      responses:
+        "200":
+          description: Request submitted successfully.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Your request to become an artist has been submitted.
+        "400":
+          description: Bad request. This could occur if the provided artist request data is invalid.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Invalid artist request data.
+        "401":
+          description: Unauthorized. The user is not authenticated.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Unauthorized access
+  /api/users:
+    put:
+      tags:
+        - user-controller
+      summary: Update User Information
+      description: Updates the details of the authenticated user.
+      operationId: updateUser
+      requestBody:
+        description: Updated user details.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserDto'
+      responses:
+        "200":
+          description: User updated successfully.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: User updated successfully.
+        "400":
+          description: Bad request. This could occur if the provided user data is invalid.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Invalid user data.
+        "401":
+          description: Unauthorized. The user is not authenticated.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Unauthorized access..
   /api/tracks/{id}:
     get:
       tags:
@@ -951,6 +1073,62 @@ paths:
           description: Not found. This could occur if the specified `id` does not
             exist.
       x-swagger-router-controller: TrackController
+    put:
+      tags:
+        - track-controller
+      summary: Update a track
+      description: Updates the details of a specific track. Only users with the 'ROLE_ARTIST' role are authorized to perform this operation.
+      operationId: updateTrack
+      parameters:
+        - name: id
+          in: path
+          description: The unique identifier of the track.
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        description: The updated details of the track.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTrackRequestDto'
+      responses:
+        "200":
+          description: Successfully updated the track.
+        "400":
+          description: Bad request. This could occur if the provided data in the request body is invalid.
+        "401":
+          description: Unauthorized. The user is not authenticated.
+        "403":
+          description: Forbidden. The user does not have the required permissions.
+        "404":
+          description: Not found. The specified `id` does not exist.
+
+    delete:
+      tags:
+        - track-controller
+      summary: Delete a track
+      description: Deletes a specific track by its unique identifier. Only users with the 'ROLE_ARTIST' role are authorized to perform this operation.
+      operationId: deleteTrack
+      parameters:
+        - name: id
+          in: path
+          description: The unique identifier of the track to delete.
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "204":
+          description: Successfully deleted the track. No content returned.
+        "401":
+          description: Unauthorized. The user is not authenticated.
+        "403":
+          description: Forbidden. The user does not have the required permissions.
+        "404":
+          description: Not found. The specified `id` does not exist.  
   /api/tracks/search:
     get:
       tags:
@@ -987,6 +1165,43 @@ paths:
         "400":
           description: Bad request. This could occur if the query parameter is invalid.
       x-swagger-router-controller: TrackController
+  /api/tracks/{id}/file:
+    put:
+      tags:
+        - track-controller
+      summary: Update the file of a track
+      description: Updates the file associated with a specific track. The request expects a multipart file upload.
+      operationId: updateTrackFile
+      parameters:
+        - name: id
+          in: path
+          description: The unique identifier of the track.
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        description: The new file for the track.
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Successfully updated the track file.
+        "400":
+          description: Bad request. This could occur if the provided file is invalid.
+        "401":
+          description: Unauthorized. The user is not authenticated.
+        "403":
+          description: Forbidden. The user does not have the required permissions.
+        "404":
+          description: Not found. The specified `id` does not exist.
   /api/subscriptions/vnpay-callback:
     get:
       tags:
@@ -1755,6 +1970,287 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PageArtist'
+  /api/admin/similar-artist:
+    post:
+      tags:
+        - admin-controller
+      summary: Precompute Similar Artists
+      description: Triggers the computation and generation of artist similarity data.
+      operationId: precomputeSimilarArtist
+      responses:
+        "200":
+          description: Successfully computed and generated artist similarity.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Successfully computed and generated artist similarity.
+
+  /api/admin/generate-genre-playlist:
+    post:
+      tags:
+        - admin-controller
+      summary: Generate Genre Playlist
+      description: Generates system playlists seeded by genre.
+      operationId: generateSystemPlaylistSeedByGenre
+      responses:
+        "200":
+          description: Successfully generated playlist seed by genre.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Successfully generated playlist seed by genre.
+
+  /api/admin/users/{userId}/roles:
+    put:
+      tags:
+        - admin-controller
+      summary: Assign Roles to User
+      description: Assigns roles to a user.
+      operationId: assignRolesToUser
+      parameters:
+        - name: userId
+          in: path
+          description: The unique identifier of the user.
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: roleIds
+          in: query
+          description: A list of role IDs to assign to the user.
+          required: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int64
+      responses:
+        "200":
+          description: Roles successfully assigned.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Roles successfully assigned.
+        "400":
+          description: Bad request. This could occur if the provided role IDs are invalid.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Invalid role IDs.
+        "404":
+          description: Not found. This could occur if the specified `userId` does not exist.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: User not found.
+
+    delete:
+      tags:
+        - admin-controller
+      summary: Revoke Roles from User
+      description: Revokes roles from a user.
+      operationId: revokeRolesFromUser
+      parameters:
+        - name: userId
+          in: path
+          description: The unique identifier of the user.
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: roleIds
+          in: query
+          description: A list of role IDs to revoke from the user.
+          required: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int64
+      responses:
+        "200":
+          description: Roles successfully revoked.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Roles revoked successfully.
+        "400":
+          description: Bad request. This could occur if the provided role IDs are invalid.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Invalid role IDs.
+        "404":
+          description: Not found. This could occur if the specified `userId` does not exist.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: User not found.
+
+  /api/admin/tracks/{id}:
+    post:
+      tags:
+        - admin-controller
+      summary: Fix Broken Track Resource
+      description: Uploads a media file to fix a broken track resource.
+      operationId: fixBrokenTrackResource
+      parameters:
+        - name: id
+          in: path
+          description: The unique identifier of the track.
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        description: The media file to upload.
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Successfully uploaded the media file for the track.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Successfully uploaded media file for Track {id}.
+
+  /api/admin/cache-evict:
+    post:
+      tags:
+        - admin-controller
+      summary: Evict All Caches
+      description: Evicts all caches in the Redis store.
+      operationId: evictAllCache
+      responses:
+        "200":
+          description: Successfully evicted all caches.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Evict All Redis Cache.
+
+  /api/admin/artist-requests:
+    get:
+      tags:
+        - admin-controller
+      summary: Get Pending Artist Requests
+      description: Retrieves a paginated list of pending artist requests.
+      operationId: getPendingArtistRequests
+      parameters:
+        - name: page
+          in: query
+          description: The page number to retrieve.
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: Successfully retrieved pending artist requests.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  page:
+                    type: integer
+                    format: int32
+                  size:
+                    type: integer
+                    format: int32
+                  totalItems:
+                    type: integer
+                    format: int64
+                  totalPages:
+                    type: integer
+                    format: int32
+                  hasNext:
+                    type: boolean
+                  hasPrevious:
+                    type: boolean
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ArtistRequest'
+
+  /api/admin/artist-requests/{id}:
+    get:
+      tags:
+        - admin-controller
+      summary: Get Artist Request by ID
+      description: Retrieves a specific artist request by its ID.
+      operationId: getArtistRequestById
+      parameters:
+        - name: id
+          in: path
+          description: The unique identifier of the artist request.
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Successfully retrieved artist request by ID.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtistRequest'
+
+    post:
+      tags:
+        - admin-controller
+      summary: Review Artist Request
+      description: Reviews an artist request and updates its status.
+      operationId: reviewArtistRequest
+      parameters:
+        - name: id
+          in: path
+          description: The unique identifier of the artist request.
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        description: The status and optional reason for the review.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  example: "approved"
+                reason:
+                  type: string
+                  example: "The artist meets all the requirements."
+      responses:
+        "200":
+          description: Successfully reviewed artist request.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: OK
+      
+  
 components:
   schemas:
     PlaylistDto:
@@ -2633,6 +3129,71 @@ components:
         isSingle: true
         id: 5
         title: title
+    ArtistRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: The unique identifier of the artist request.
+        userId:
+          type: integer
+          format: int64
+          description: The ID of the user who submitted the request.
+        artistName:
+          type: string
+          description: The name of the artist being requested.
+          example: "John Doe"
+        genre:
+          type: string
+          description: The genre of the artist.
+          example: "Rock"
+        portfolioUrl:
+          type: string
+          description: URL to the artist's portfolio.
+          example: "http://example.com/portfolio"
+        bio:
+          type: string
+          description: A brief biography of the artist.
+          example: "An emerging rock artist with a passion for live performances."
+        socialMediaLinks:
+          type: string
+          description: Links to the artist's social media profiles.
+          example: "http://twitter.com/artist_profile"
+        requestDate:
+          type: string
+          format: date-time
+          description: The date when the artist request was submitted.
+          example: "2023-08-18T12:34:56"
+        status:
+          type: string
+          description: The current status of the artist request.
+          enum:
+            - PENDING
+            - APPROVED
+            - DENIED
+          example: "PENDING"
+        reviewDate:
+          type: string
+          format: date-time
+          description: The date when the request was reviewed.
+          example: "2023-08-19T14:30:00"
+        reviewedBy:
+          type: integer
+          format: int64
+          description: The ID of the admin who reviewed the request.
+        reason:
+          type: string
+          description: The reason for approval or denial.
+          example: "The artist meets all the requirements."
+    UpdateTrackRequestDto:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          description: The title of the track.
     PageAlbum:
       type: object
       properties:
@@ -2674,11 +3235,3 @@ components:
           isSingle: true
           id: 5
           title: title
-    api_tracks_body:
-      required:
-      - file
-      type: object
-      properties:
-        file:
-          type: string
-          format: binary
